@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-	let itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon"]
+	var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon"]
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -80,6 +80,42 @@ class TodoListViewController: UITableViewController {
 
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
+
+
+	// MARK: - Add New Items
+
+	@IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+
+		var textField = UITextField()
+
+		let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
+
+		alert.addTextField { (alertTextField) in
+			alertTextField.placeholder = "Create new item."
+			textField = alertTextField
+		}
+
+		let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+			// What will happen once the user clicks the Add Item button to our UIAlert.
+
+			// No need for an optional binding because a text attribute will never be nil.
+			// If there is nothing in the attribute, it is set to an empty string.
+//			if let newText = textField.text { // alert.textFields?.first?.text {
+//				self.itemArray.append(newText)
+//			}
+			// ... so just force unwrap the text attribute.
+			self.itemArray.append(textField.text!)
+			// Of course, some error checkings are in order because if nothing is entered in the text field,
+			// an empty string is appended to itemArray.
+
+			self.tableView.reloadData()
+		}
+
+		alert.addAction(action)
+
+		present(alert, animated: true, completion: nil)
+	}
+
 
 
 
