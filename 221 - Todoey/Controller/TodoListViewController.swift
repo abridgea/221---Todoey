@@ -10,7 +10,11 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
-	var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon"]
+	var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
+
+	var todoList = [Item]()
+
+//	var checkMark = [Bool]()
 
 	let defaults = UserDefaults.standard
 
@@ -18,12 +22,22 @@ class TodoListViewController: UITableViewController {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 
-		print (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
+//		for _ in itemArray {
+//			checkMark.append(false)
+//		}
 
-
-		if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-			itemArray = items
+		for item in itemArray {
+			todoList.append(Item(title: item, done: false))
 		}
+
+
+//		if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+//			itemArray = items
+//		}
+
+//		if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+//			todoList = items
+//		}
 	}
 
 	// Mark - Tableview Datasource Methods
@@ -34,12 +48,40 @@ class TodoListViewController: UITableViewController {
 //	}
 
 	override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-		return itemArray.count
+//		return itemArray.count
+
+		return todoList.count
 	}
 
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
+		// The following line creates new cells each time a cell comes into view. This is not a good way to
+		// work with a tableview. Cells should be reused --- as shown below.
+//		let cell = UITableViewCell.init(style: .default, reuseIdentifier: "ToDoItemCell")
+
+		// This one looks for reusable cells in memory. And if there is none, it creates a new cell.
 		let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
-		cell.textLabel?.text = itemArray[indexPath.row]
+
+//		cell.textLabel?.text = itemArray[indexPath.row]
+
+		let item = todoList[indexPath.row]
+		cell.textLabel?.text = item.title
+
+//		if checkMark[indexPath.row] {
+//			cell.accessoryType = .checkmark
+//		}
+//		else {
+//			cell.accessoryType = .none
+//		}
+
+//		if item.done {
+//			cell.accessoryType = .checkmark
+//		}
+//		else {
+//			cell.accessoryType = .none
+//		}
+
+		cell.accessoryType = item.done ? .checkmark : .none
 
 		return cell
 	}
@@ -77,14 +119,23 @@ class TodoListViewController: UITableViewController {
 //		}
 
 		// But the following is probably the best way to code this.
-		if let cell = tableView.cellForRow(at: indexPath) {
-			if cell.accessoryType == .none {
-				cell.accessoryType = .checkmark
-			}
-			else {
-				cell.accessoryType = .none
-			}
-		}
+//		if let cell = tableView.cellForRow(at: indexPath) {
+//			if cell.accessoryType == .none {
+//				cell.accessoryType = .checkmark
+////				checkMark[indexPath.row] = true
+//
+//				todoList[indexPath.row].done = true
+//			}
+//			else {
+//				cell.accessoryType = .none
+////				checkMark[indexPath.row] = false
+//
+//				todoList[indexPath.row].done = false
+//			}
+//		}
+
+		todoList[indexPath.row].done = !todoList[indexPath.row].done
+		tableView.reloadData()
 
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
@@ -112,13 +163,23 @@ class TodoListViewController: UITableViewController {
 //				self.itemArray.append(newText)
 //			}
 			// ... so just force unwrap the text attribute.
-			self.itemArray.append(textField.text!)
+//			self.itemArray.append(textField.text!)
 			// Of course, some error checkings are in order because if nothing is entered in the text field,
 			// an empty string is appended to itemArray.
 
-			self.defaults.set(self.itemArray, forKey: "TodoListArray")
+			self.todoList.append(Item(title: textField.text!, done: false))
 
-			self.tableView.reloadData()
+//			self.defaults.set(self.itemArray, forKey: "TodoListArray")
+
+			do {
+				let encodedData = try NSKeyedArchiver.archivedData(withRootObject: self.itemArray, requiringSecureCoding: false)
+
+				self.defaults.set(encodedData, forKey: "TodoListArray")
+				self.tableView.reloadData()
+			}
+			catch {
+				print ("Error while encoding")
+			}
 		}
 
 		alert.addAction(action)
