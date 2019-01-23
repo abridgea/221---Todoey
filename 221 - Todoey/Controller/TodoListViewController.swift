@@ -16,11 +16,22 @@ class TodoListViewController: UITableViewController {
 
 //	var checkMark = [Bool]()
 
-	let defaults = UserDefaults.standard
+	// We are not using UserDefaults to save data anymore. Instead we use, NSCoder.
+//	let defaults = UserDefaults.standard
+
+	// The following shows where the data is stored. This is only for demonstrating the way to identify the location of where the plist will be saved. In actual code, extend this command a little as shown further below.
+	//		let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+	//		print (dataFilePath!) // This line was used to show the dataFilePath. But of course, it does not work here outside of functions.data
+
+
+	let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+	// At this point, the plist is not created. It merely created the path.
+
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
+
 
 //		for _ in itemArray {
 //			checkMark.append(false)
@@ -38,6 +49,7 @@ class TodoListViewController: UITableViewController {
 //		if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
 //			todoList = items
 //		}
+
 	}
 
 	// Mark - Tableview Datasource Methods
@@ -137,6 +149,8 @@ class TodoListViewController: UITableViewController {
 		todoList[indexPath.row].done = !todoList[indexPath.row].done
 		tableView.reloadData()
 
+		saveData()
+
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
 
@@ -171,15 +185,23 @@ class TodoListViewController: UITableViewController {
 
 //			self.defaults.set(self.itemArray, forKey: "TodoListArray")
 
-			do {
-				let encodedData = try NSKeyedArchiver.archivedData(withRootObject: self.itemArray, requiringSecureCoding: false)
+			// The following block of code was my initial attempt at data persistence. But as it was pointed in the course,
+			// UserDefaults is NOT for suited for anything larger than small bits of data. It is very inefficient because
+			// it needs to load the entire plist into memory for it to work. So, once the data type gets to the point where
+			// it needs to be encoded, like my attempt below, it is time for other ways of persisting data. In Lecture 232,
+			// NSCoder was discussed.
+//			do {
+//				let encodedData = try NSKeyedArchiver.archivedData(withRootObject: self.itemArray, requiringSecureCoding: false)
+//
+//				self.defaults.set(encodedData, forKey: "TodoListArray")
+//				self.tableView.reloadData()
+//			}
+//			catch {
+//				print ("Error while encoding")
+//			}
 
-				self.defaults.set(encodedData, forKey: "TodoListArray")
-				self.tableView.reloadData()
-			}
-			catch {
-				print ("Error while encoding")
-			}
+			// ... but the following is how it should be done, using NSEncoder.
+			self.saveData()
 		}
 
 		alert.addAction(action)
@@ -188,6 +210,18 @@ class TodoListViewController: UITableViewController {
 	}
 
 
+	func saveData() {
+		let encoder = PropertyListEncoder()
+		do {
+			let data = try encoder.encode(todoList)
+			try data.write(to: dataFilePath!)
+		}
+		catch {
+			print ("Error while encoding data: \(error)")
+		}
+
+		tableView.reloadData()
+	}
 
 
 }

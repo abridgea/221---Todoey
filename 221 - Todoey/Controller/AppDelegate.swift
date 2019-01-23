@@ -23,7 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 		// should be the plist there where our data are stored.
 		// The easiest way to get there probably, copying the print out, and pasted it after typing "open" on terminal. And delete the last directory ("Documents"), and type "Library/Preferences". A folder opens in Finder with the plist in it.
 
-		print (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
+//		print (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
 
 		return true
 	}
