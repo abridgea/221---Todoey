@@ -7,10 +7,13 @@
 //
 
 import UIKit
+import CoreData		// In the video [How to Save Data with Core Data (Create in CRUD)] (Sec 18 Lec 238) @5:18, Angela says this line is needed. But in practice, the code works without importing CoreData.
 
+
+// NTS: To make this view controller the delegate of the search bar, we can create an outlet of the search bar, and set the delegate programatically (e.g., mySearchBar.delegate = self). Or, alternatively, simply right-click from the search bar in the Main.storyboard to the yellow view icon at the top of the view conroller, and select "delegate" from the black window that pops open. Either way works. In this code, the latter was used.
 class TodoListViewController: UITableViewController {
 
-	var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
+//	var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
 
 	var todoList = [Item]()
 
@@ -23,23 +26,31 @@ class TodoListViewController: UITableViewController {
 	//		let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 	//		print (dataFilePath!) // This line was used to show the dataFilePath. But of course, it does not work here outside of functions.data
 
+	// After adding Core Data, the line below became obsolete because we are no longer saving data in plist.
+//	let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+	// At this point, the plist is not created. The line above merely created the path. (This was a comment added before adding Core Data.)
 
-	let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-	// At this point, the plist is not created. It merely created the path.
+	// After adding Core Data, context property was created. It is a handle to the AppDelegate property persistentContainer's viewContext.
+	// But since writing "AppDelegate.persistentContainer.viewContext" is not possible (because AppDelegate is a class name, and not an instance object), we need to use the delegate property of the UIApplication singleton. This delegate points to App object, or in other words, AppDelegate.
+	let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
+	var selectedCategory : Category? {
+		didSet {
+			loadItems()
+		}
+	}
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		// Do any additional setup after loading the view, typically from a nib.
 
-
 //		for _ in itemArray {
 //			checkMark.append(false)
 //		}
 
-		for item in itemArray {
-			todoList.append(Item(title: item, done: false))
-		}
+//		for item in itemArray {
+//			todoList.append(Item(title: item, done: false))
+//		}
 
 
 //		if let items = defaults.array(forKey: "TodoListArray") as? [String] {
@@ -50,6 +61,17 @@ class TodoListViewController: UITableViewController {
 //			todoList = items
 //		}
 
+		// The following line become obsolete when Core Data was added.
+//		print (dataFilePath!)
+
+		// The following line was added to locate the depository of data after Core Data was added.
+		// Copy from /Users/<User Name> all the way to /Documents/. In Terminal, type open, and paste, press return.
+		// The partinent Documents directory is opened. Go back up one directory, go into Library, and Application Support.
+		// That's where the DataModel files are saved. The file of most interest is, "DataModel.sqlite"
+		print (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+
+		// After Category View Controller was created, a property called selectedCategory was created, and its didSet method was used to call loadItems(). cf above in the list of properties.
+//		loadItems()
 	}
 
 	// Mark - Tableview Datasource Methods
@@ -146,10 +168,22 @@ class TodoListViewController: UITableViewController {
 //			}
 //		}
 
-		todoList[indexPath.row].done = !todoList[indexPath.row].done
-		tableView.reloadData()
+		// NTS: If the text value needs to be changed (e.g., "Completed!"), use the following method:
+//		todoList[indexPath.row].setValue("Completed!", forKey: "title")
 
-		saveData()
+		// NTS: The following line toggles the checkmark on items. A checkmark means the task is complete. Instead, if the item is to be deleted from the list, use the method shown below.
+		todoList[indexPath.row].done = !todoList[indexPath.row].done
+
+		// NTS: The following block is some items need to be deleted, rather than having a checkmark. If deleting completed tasks is preferred, comment out the line above that toggles the checkmark.
+		// NTS: The order of these 2 lines matters greatly. It is important to remove the item from the context before
+		// removing the item from the array. Otherwise, the app will crash when the last item is selected. Or, the app
+		// deletes multiple lines when entries other than the last are selected. This is because the first line relies
+		// on the array to delete specific item. Once the item is removed from the context, the corresponding item in
+		// the array can safely be removed.
+//		context.delete(todoList[indexPath.row])	// This removes an item in the context, using the array as a guide.
+//		todoList.remove(at: indexPath.row)		// This removes a corresponding item in the array.
+
+		saveItems()
 
 		tableView.deselectRow(at: indexPath, animated: true)
 	}
@@ -159,16 +193,16 @@ class TodoListViewController: UITableViewController {
 
 	@IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
 
-		var textField = UITextField()
-
 		let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
 
-		alert.addTextField { (alertTextField) in
+		var textField = UITextField()
+
+		alert.addTextField { (alertTextField) in	// alertTextField is the name given to text field created by alert here.
 			alertTextField.placeholder = "Create new item."
-			textField = alertTextField
+			textField = alertTextField				// ... then apparently the address is passed to a variable that function as a pointer to that address, so it can be accessed in the completion closure of the action below.
 		}
 
-		let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+		let action = UIAlertAction(title: "Add Item", style: .default) { (action) in 	// Apparently, the UIAlertAction parameter in the closure is not used. So, it can probably be _ (underscore) rather than giving it an actual name (action) as it was done in the video, which in this case can be confusing because the variable name is also action.
 			// What will happen once the user clicks the Add Item button to our UIAlert.
 
 			// No need for an optional binding because a text attribute will never be nil.
@@ -181,7 +215,16 @@ class TodoListViewController: UITableViewController {
 			// Of course, some error checkings are in order because if nothing is entered in the text field,
 			// an empty string is appended to itemArray.
 
-			self.todoList.append(Item(title: textField.text!, done: false))
+			// When Core Data was added, the following line flagged an error. And it had to be modifed.
+//			self.todoList.append(Item(title: textField.text!, done: false))
+
+			let newItem = Item(context: self.context)
+			newItem.title = textField.text!
+			newItem.done  = false
+			newItem.parentCategory = self.selectedCategory
+
+			self.todoList.append(newItem)
+
 
 //			self.defaults.set(self.itemArray, forKey: "TodoListArray")
 
@@ -201,8 +244,9 @@ class TodoListViewController: UITableViewController {
 //			}
 
 			// ... but the following is how it should be done, using NSEncoder.
-			self.saveData()
+			self.saveItems()
 		}
+
 
 		alert.addAction(action)
 
@@ -210,19 +254,110 @@ class TodoListViewController: UITableViewController {
 	}
 
 
-	func saveData() {
-		let encoder = PropertyListEncoder()
+	func saveItems() {
+
+		// When Core Data is added, the code below became obsolete.
+//		let encoder = PropertyListEncoder()
+//		do {
+//			let data = try encoder.encode(todoList)
+//			try data.write(to: dataFilePath!)
+//		}
+//		catch {
+//			print ("Error while encoding data: \(error)")
+//		}
+
+		// ...and instead, the following code was created.
+
 		do {
-			let data = try encoder.encode(todoList)
-			try data.write(to: dataFilePath!)
+			try context.save()
 		}
 		catch {
-			print ("Error while encoding data: \(error)")
+			print ("Error saving context: \(error)")
 		}
 
 		tableView.reloadData()
 	}
 
 
+//	func loadItems() {
+	func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+		// The following block of code became obsolete when Core Data's READ functionality was added.
+//		do {
+//			if let data = try? Data(contentsOf: dataFilePath!) {
+//				let decoder = PropertyListDecoder()
+//
+//				do {
+//					// Note: In the video instructions, itemAray was retooled to be an array of Item.
+//					// But in my case, a new array, todoList, was created to be an array of Item.
+//					// The property, itemArray, was kept as an array of Strings. So, if the video instructions
+//					// were to be followed, an error is flagged below stating ""Cannot assign value of type '[Item]' to type '[String]'".
+//					// Be sure to use todoList instead of itemArray in video#234 and on.
+//					// Note2: The reason we need to type 'self' below is as follows:
+//					// This argument type is "Decodable.Protocol'. And we need to specify the data type because Xcode
+//					// cannot reliablly infer the data type in this case. So, '[Item]' is written. But that's not enough.
+//					// Since we are not specifying an object, in order to refer to the type (i.e., an array of Item),
+//					// 'self' needs to be added. That's the explanation in the video, and the error flag disappears.
+//					todoList = try decoder.decode([Item].self, from: data)
+//				}
+//				catch {
+//					print ("Error in decoding.")
+//				}
+//
+//			}
+//		}
+
+		// This is where the new set of code begins after Core Data was added.
+		// NTS: The video says it is necessary to specify the type <Item>. But it worked without specifying it.
+		// NTS: The line below became unnecessary when parameters were added to the method name.
+//		let request : NSFetchRequest<Item> = Item.fetchRequest()
+
+		let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+
+		if let addtionalPredicate = predicate {
+			request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, addtionalPredicate])
+		}
+		else {
+			request.predicate = categoryPredicate
+		}
+
+
+
+
+		do {
+			todoList = try context.fetch(request)
+		}
+		catch {
+			print ("Error fetching data from context: \(error)")
+		}
+
+		tableView.reloadData()
+
+	}
 }
 
+
+// MARK: - Search Bar Delegate
+
+extension TodoListViewController : UISearchBarDelegate {
+
+	func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+		let request : NSFetchRequest<Item> = Item.fetchRequest()
+
+		let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+
+		request.sortDescriptors = [NSSortDescriptor(key: "tile", ascending: true)]
+
+		loadItems(with: request, predicate: predicate)
+	}
+
+
+	func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+		if searchBar.text?.count == 0 {
+			loadItems()
+
+			DispatchQueue.main.async {
+				searchBar.resignFirstResponder()
+			}
+		}
+	}
+}
