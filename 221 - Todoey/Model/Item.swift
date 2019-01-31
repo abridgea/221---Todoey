@@ -8,6 +8,10 @@
 
 import Foundation
 
+// This class was used earlier in the module. Then got deleted when (probably) Core Data was introduced.
+// It was then once again brought back when Realm was introduced. That part of the code is shown below after all these lines commented out.
+
+
 // NTS: Encodable and Decodable together can be written as Codable (Swift 4).
 
 // NTS
@@ -39,3 +43,21 @@ import Foundation
 //		self.done  = done
 //	}
 //}
+
+// --------------------------------------------------
+// The following section is the code used with Realm.
+
+import RealmSwift
+
+// The superclass Object is a Realm class, used to define Realm model objects (e.g, Item).
+// I kept DataModel.xcdatamodeld, used with Core Data, because this project is for learning. But that
+// resulted in Xcode saying 'Item' is redeclared. That's because Item was defined in DataModel.xcdatamodeld,
+// and for Class/Codegen under Data Model Inspector, "Class Definition" was selected. That means Xcode
+// generated necessary code to define Item class in the background. So, when Realm was added, that option
+// was set to "Manual/None" to keep Xcode from generating the code in the background.
+class Item : Object {
+
+	@objc dynamic var title : String = ""		// "@objc" modifier and "dynamic" keyword are needed to work with Realm.
+	@objc dynamic var done : Bool = false
+	
+}

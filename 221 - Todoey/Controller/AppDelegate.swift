@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,6 +18,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
 		// Override point for customization after application launch.
+		
+		print ("application(didFinishLaunchingWithOptions:)")
+		
+		print (Realm.Configuration.defaultConfiguration.fileURL!)
 
 		// The following line shows where the plist is saved. And that is where our data are stored.
 		// Follow the path shown in the console, all the way to just before Documents (the last directory that will
@@ -26,6 +31,28 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 //		print (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
 
+		
+		// NTS: The following blocks were coded after adding Realm to the project.
+		// Then deleted after a couple of runs because it was only a test.
+//		let data = Data()
+//		data.name	= "Gan"
+//		data.age	= 18
+		
+		do {
+			let realm = try Realm()
+			// The following block was deleted after a couple of test runs to add "Gan" and "18".
+//			try realm.write {
+//				realm.add(data)
+//			}
+		}
+		catch {
+			print ("Error creating realm: \(error)")
+		}
+
+		
+		
+		
+		
 		return true
 	}
 
