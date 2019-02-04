@@ -57,7 +57,12 @@ import RealmSwift
 // was set to "Manual/None" to keep Xcode from generating the code in the background.
 class Item : Object {
 
-	@objc dynamic var title : String = ""		// "@objc" modifier and "dynamic" keyword are needed to work with Realm.
+	@objc dynamic var title : String = ""	// "@objc" modifier and "dynamic" keyword are needed to work with Realm.
 	@objc dynamic var done : Bool = false
+//	@objc dynamic var dateCreated = Date()
+	@objc dynamic var dateCreated : Date?
 	
+	var parentCategory = LinkingObjects(fromType: Category.self, property: "items")
+	
+
 }
